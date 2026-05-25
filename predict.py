@@ -4,8 +4,7 @@ import joblib
 
 from data_loader import download_stock_data
 from features import add_technical_features, encode_ticker
-from sentiment import get_news_sentiment
-
+from sentiment import get_sentiment
 
 ROOT = Path(__file__).resolve().parent
 MODEL_DIR = ROOT / "saved_models"
@@ -32,10 +31,10 @@ def predict_ticker(ticker: str):
 
     proba_up = float(MODEL.predict_proba(X)[0, 1])
 
-    sentiment_score, headlines = get_news_sentiment(ticker)
-
+    sentiment_score, headlines = get_sentiment(ticker)
     sentiment_adj = (sentiment_score + 1) / 2
-    combined = 0.85 * proba_up + 0.15 * sentiment_adj
+
+    combined = 0.85 * proba_up + 0.15 * sentstiment_adj
 
     return {
         "ticker": ticker,

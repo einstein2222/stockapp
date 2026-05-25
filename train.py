@@ -2,11 +2,10 @@ import json
 import joblib
 from pathlib import Path
 
-from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 
 from data_loader import download_stock_data
-from features import add_features
+from features import add_technical_features
 
 TICKERS = ["AAPL", "MSFT", "TSLA", "NVDA"]
 
@@ -14,26 +13,33 @@ ROOT = Path(__file__).parent
 MODEL_DIR = ROOT / "saved_models"
 MODEL_DIR.mkdir(exist_ok=True)
 
-def build():
+
+def build_dataset():
     frames = []
 
     for t in TICKERS:
         df = download_stock_data(t)
-        df = add_features(df)
         df["Ticker"] = t
+
+        df = add_technical_features(df)
+
+        df["Target"] = (df["Close"].shift(-1) > df["Close"]).astype(int)
+
+        df = df.dropna()
         frames.append(df)
 
-    df = __import__("pandas").concat(frames).fillna(0)
+    return __import__("pandas").concat(frames).fillna(0)
 
-    features = [c for c in df.columns if c not in ["Target", "Date"]]
 
-    X = df[features]
+def train():
+    df = build_dataset()
+
+    feature_cols = [c for c in df.columns if c not in ["Target", "Date"]]
+
+    X = df[feature_cols]
     y = df["Target"]
 
-    log = LogisticRegression(max_iter=2000)
-    log.fit(X, y)
-
-    xgb = XGBClassifier(
+    model = XGBClassifier(
         n_estimators=200,
         max_depth=5,
         learning_rate=0.05,
@@ -42,12 +48,13 @@ def build():
         eval_metric="logloss"
     )
 
-    xgb.fit(X, y)
+    model.fit(X, y)
 
-    joblib.dump(xgb, MODEL_DIR / "model.pkl")
-    joblib.dump(features, MODEL_DIR / "features.json")
+    joblib.dump(model, MODEL_DIR / "xgb_model.pkl")
+    joblib.dump(feature_cols, MODEL_DIR / "feature_columns.json")
 
     print("Training complete.")
 
+
 if __name__ == "__main__":
-    build()
+    train()

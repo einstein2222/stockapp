@@ -1,7 +1,8 @@
 import pandas as pd
 import ta
 
-def add__technical_features(df):
+
+def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     df["SMA_10"] = ta.trend.sma_indicator(df["Close"], 10)
@@ -10,18 +11,23 @@ def add__technical_features(df):
     df["EMA_10"] = ta.trend.ema_indicator(df["Close"], 10)
     df["EMA_20"] = ta.trend.ema_indicator(df["Close"], 20)
 
-    df["RSI"] = ta.momentum.rsi(df["Close"], 14)
+    df["RSI_14"] = ta.momentum.rsi(df["Close"], 14)
 
     df["MACD"] = ta.trend.macd_diff(df["Close"])
 
-    bb = ta.volatility.BollingerBands(df["Close"])
-    df["BB_high"] = bb.bollinger_hband()
-    df["BB_low"] = bb.bollinger_lband()
+    bb = ta.vgrep -R "add_features" .olatility.BollingerBands(df["Close"], window=20)
+    df["BB_High"] = bb.bollinger_hband()
+    df["BB_Low"] = bb.bollinger_lband()
 
-    df["Return"] = df["Close"].pct_change()
-    df["Volatility"] = df["Return"].rolling(10).std()
+    df["Return_1D"] = df["Close"].pct_change()
+    df["Volatility_10D"] = df["Return_1D"].rolling(10).std()
 
-    df["Target"] = (df["Close"].shift(-1) > df["Close"]).astype(int)
+    df["Price_Range"] = (df["High"] - df["Low"]) / df["Close"]
 
-    df = df.dropna().reset_index(drop=True)
     return df
+
+
+def encode_ticker(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    dummies = pd.get_dummies(df["Ticker"], prefix="Ticker")
+    return pd.concat([df.drop(columns=["Ticker"]), dummies], axis=1)

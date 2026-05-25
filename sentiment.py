@@ -3,6 +3,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 analyzer = SentimentIntensityAnalyzer()
 
+
 def get_sentiment(ticker):
     try:
         news = yf.Ticker(ticker).news or []
