@@ -1,9 +1,10 @@
+# predict.py
 from pathlib import Path
 import json
 import joblib
 
 from data_loader import download_stock_data
-from features import add_technical_features, encode_ticker
+from features import add_technical_features
 from sentiment import get_sentiment
 
 ROOT = Path(__file__).resolve().parent
@@ -19,22 +20,21 @@ def predict_ticker(ticker: str):
     ticker = ticker.upper().strip()
 
     df = download_stock_data(ticker)
-    df["Ticker"] = ticker
-
     df = add_technical_features(df)
-    df = df.dropna()
+    df = df.dropna().reset_index(drop=True)
+
+    if df.empty:
+        raise ValueError(f"Not enough data to build features for {ticker}")
 
     latest = df.iloc[-1:].copy()
-    latest = encode_ticker(latest)
 
     X = latest.reindex(columns=FEATURE_COLUMNS, fill_value=0)
 
     proba_up = float(MODEL.predict_proba(X)[0, 1])
-
     sentiment_score, headlines = get_sentiment(ticker)
     sentiment_adj = (sentiment_score + 1) / 2
 
-    combined = 0.85 * proba_up + 0.15 * sentstiment_adj
+    combined = 0.85 * proba_up + 0.15 * sentiment_adj
 
     return {
         "ticker": ticker,
