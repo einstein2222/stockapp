@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import ta
 
-
 def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy().sort_values("Date").reset_index(drop=True)
 
@@ -27,14 +26,12 @@ def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:
     df["Return_1D"] = df["Close"].pct_change()
     df["Return_5D"] = df["Close"].pct_change(5)
     df["Volatility_10D"] = df["Return_1D"].rolling(10).std()
-
     df["Price_Range"] = (df["High"] - df["Low"]) / df["Close"]
     df["Close_to_Open"] = (df["Close"] - df["Open"]) / df["Open"]
     df["LogReturn"] = np.log(df["Close"] / df["Close"].shift(1))
     df["Momentum_5D"] = df["Close"] - df["Close"].shift(5)
 
     return df
-
 
 def add_target(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy().sort_values("Date").reset_index(drop=True)

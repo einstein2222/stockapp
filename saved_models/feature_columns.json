@@ -8,10 +8,17 @@
   "SMA_20",
   "EMA_10",
   "EMA_20",
-  "RSI",
+  "RSI_14",
   "MACD",
-  "BB_high",
-  "BB_low",
-  "Return",
-  "Volatility"
+  "MACD_Diff",
+  "BB_High",
+  "BB_Low",
+  "BB_Mid",
+  "Return_1D",
+  "Return_5D",
+  "Volatility_10D",
+  "Price_Range",
+  "Close_to_Open",
+  "LogReturn",
+  "Momentum_5D"
 ]

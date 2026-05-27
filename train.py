@@ -16,52 +16,72 @@ from sklearn.metrics import (
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
-from data_loader import download_stock_data
 from features import add_technical_features, add_target
 
-TICKERS = [
-    "AAPL", "MSFT", "AMZN", "GOOGL", "META",
-    "NVDA", "TSLA", "NFLX", "JPM", "XOM",
-    "UNH", "COST"
-]
+HF_DATASET_PATH = "hf://datasets/usamaahmedsh/elliott-wave-market-data-complete/market_data_1d.parquet"
 
 ROOT = Path(__file__).parent
 MODEL_DIR = ROOT / "saved_models"
 MODEL_DIR.mkdir(exist_ok=True)
 
+def load_data():
+    df = pd.read_parquet(HF_DATASET_PATH)
+    df.columns = [c.lower() for c in df.columns]
 
-def build_datasets():
-    train_frames = []
-    test_frames = []
+    # keep only stock data, daily interval
+    if "source_category" in df.columns:
+        df = df[df["source_category"].astype(str).str.lower() == "stocks"].copy()
 
-    for t in TICKERS:
-        df = download_stock_data(t, allow_download=True)
-        df = add_technical_features(df)
-        df = add_target(df)
+    if "interval" in df.columns:
+        df = df[df["interval"].astype(str).str.lower() == "1d"].copy()
 
-        split_idx = int(len(df) * 0.8)
-        train_frames.append(df.iloc[:split_idx].copy())
-        test_frames.append(df.iloc[split_idx:].copy())
+    if "ticker" not in df.columns:
+        raise ValueError("Dataset missing ticker column")
 
-    train_df = pd.concat(train_frames, ignore_index=True).fillna(0)
-    test_df = pd.concat(test_frames, ignore_index=True).fillna(0)
+    df["Date"] = pd.to_datetime(df["datetime"], errors="coerce")
+    df = df.dropna(subset=["Date"]).copy()
 
-    return train_df, test_df
+    rename_map = {
+        "open": "Open",
+        "high": "High",
+        "low": "Low",
+        "close": "Close",
+        "volume": "Volume",
+        "ticker": "Ticker",
+    }
+    df = df.rename(columns=rename_map)
 
+    return df[["Date", "Ticker", "Open", "High", "Low", "Close", "Volume"]].reset_index(drop=True)
+
+def build_dataset():
+    df = load_data()
+    frames = []
+
+    for ticker, group in df.groupby("Ticker"):
+        group = group.sort_values("Date").reset_index(drop=True)
+        if len(group) < 60:
+            continue
+
+        group = add_technical_features(group)
+        group = add_target(group)
+        frames.append(group)
+
+    if not frames:
+        raise ValueError("No usable tickers after preprocessing")
+
+    return pd.concat(frames, ignore_index=True).fillna(0)
 
 def train():
-    train_df, test_df = build_datasets()
+    df = build_dataset()
 
-    feature_cols = [
-        c for c in train_df.columns
-        if c not in ["Date", "Target"]
-    ]
+    feature_cols = [c for c in df.columns if c not in ["Date", "Target", "Ticker"]]
 
-    X_train = train_df[feature_cols]
-    y_train = train_df["Target"].astype(int)
+    X = df[feature_cols]
+    y = df["Target"].astype(int)
 
-    X_test = test_df[feature_cols]
-    y_test = test_df["Target"].astype(int)
+    split = int(len(df) * 0.8)
+    X_train, X_test = X.iloc[:split], X.iloc[split:]
+    y_train, y_test = y.iloc[:split], y.iloc[split:]
 
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -109,8 +129,7 @@ def train():
     with open(MODEL_DIR / "feature_columns.json", "w") as f:
         json.dump(feature_cols, f, indent=2)
 
-    print(f"\nSaved model artifacts to: {MODEL_DIR}")
-
+    print("\nTraining complete.")
 
 if __name__ == "__main__":
     train()

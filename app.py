@@ -31,7 +31,6 @@ if st.button("Predict"):
                         title = item.get("title", "Untitled")
                         source = item.get("source", "Unknown source")
                         url = item.get("url", "")
-
                         if url:
                             st.markdown(f"- [{title}]({url}) — {source}")
                         else:

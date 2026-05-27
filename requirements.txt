@@ -2,9 +2,9 @@ pandas
 numpy
 scikit-learn
 xgboost
-yfinance
 ta
-streamlit
 joblib
+streamlit
 vaderSentiment
-matplotlib
+requests
+pyarrow

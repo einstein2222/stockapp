@@ -16,11 +16,10 @@ MODEL = joblib.load(MODEL_DIR / "xgb_model.pkl")
 with open(MODEL_DIR / "feature_columns.json", "r") as f:
     FEATURE_COLUMNS = json.load(f)
 
-
 def predict_ticker(ticker: str):
     ticker = ticker.upper().strip()
 
-    df = download_stock_data(ticker, allow_download=True)
+    df = download_stock_data(ticker, allow_download=False)
     df = add_technical_features(df)
     df = df.dropna().reset_index(drop=True)
 

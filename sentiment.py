@@ -7,7 +7,6 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 analyzer = SentimentIntensityAnalyzer()
 
-
 def _yahoo_news(ticker: str, max_items: int = 10):
     items = []
     try:
@@ -25,7 +24,6 @@ def _yahoo_news(ticker: str, max_items: int = 10):
             "url": item.get("link", "")
         })
     return items
-
 
 def _google_news_rss(ticker: str, max_items: int = 10):
     items = []
@@ -52,7 +50,6 @@ def _google_news_rss(ticker: str, max_items: int = 10):
 
     return items
 
-
 def get_sentiment(ticker: str, max_items: int = 10):
     ticker = ticker.upper().strip()
 
@@ -63,8 +60,5 @@ def get_sentiment(ticker: str, max_items: int = 10):
     if not news_items:
         return 0.0, []
 
-    scores = [
-        analyzer.polarity_scores(item["title"])["compound"]
-        for item in news_items
-    ]
+    scores = [analyzer.polarity_scores(item["title"])["compound"] for item in news_items]
     return float(sum(scores) / len(scores)), news_items
