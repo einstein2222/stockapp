@@ -3,33 +3,30 @@ from predict import predict_ticker
 
 st.set_page_config(page_title="Stock Predictor", layout="centered")
 
-st.title("📈 Stock Price Movement Predictor")
-st.write("Enter any stock ticker (AAPL, TSLA, MSFT, etc.)")
+st.title("Stock Price Movement Predictor")
+st.write("Enter any stock ticker")
 
 ticker = st.text_input("Ticker").upper().strip()
 
 if st.button("Predict"):
     if not ticker:
-        st.error("Please enter a ticker.")
+        st.error("Please enter a ticker")
     else:
         with st.spinner("Running model..."):
             try:
                 result = predict_ticker(ticker)
 
-                # Prediction result
                 if result["prediction"] == 1:
                     st.success(f"{ticker} predicted UP 📈")
                 else:
                     st.error(f"{ticker} predicted DOWN 📉")
 
-                # Metrics
                 st.metric("Up Probability", f"{result['proba_up']*100:.2f}%")
                 st.metric("Down Probability", f"{result['proba_down']*100:.2f}%")
                 st.metric("Sentiment Score", f"{result['sentiment_score']:.3f}")
                 st.metric("Combined Score", f"{result['combined_score']*100:.2f}%")
 
-                # News section with clickable links
-                st.subheader("📰 News")
+                st.subheader("News")
 
                 if result["news_items"]:
                     for n in result["news_items"]:

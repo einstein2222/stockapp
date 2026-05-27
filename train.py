@@ -28,7 +28,6 @@ def load_data():
     df = pd.read_parquet(HF_DATASET_PATH)
     df.columns = [c.lower() for c in df.columns]
 
-    # keep only stock data, daily interval
     if "source_category" in df.columns:
         df = df[df["source_category"].astype(str).str.lower() == "stocks"].copy()
 
