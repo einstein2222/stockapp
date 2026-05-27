@@ -1,6 +1,5 @@
 from pathlib import Path
 import json
-
 import joblib
 import pandas as pd
 
@@ -19,7 +18,7 @@ with open(MODEL_DIR / "feature_columns.json", "r") as f:
 def predict_ticker(ticker: str):
     ticker = ticker.upper().strip()
 
-    df = download_stock_data(ticker, allow_download=False)
+    df = download_stock_data(ticker)
     df = add_technical_features(df)
     df = df.dropna().reset_index(drop=True)
 
