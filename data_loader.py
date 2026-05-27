@@ -1,56 +1,45 @@
-import json
-import time
 from pathlib import Path
-
 import pandas as pd
-import requests
+import yfinance as yf
 
-API_KEY = "8RQ53JQR9YALUWED"
-CACHE_DIR = Path(__file__).resolve().parent / "av_cache"
-CACHE_DIR.mkdir(exist_ok=True)
+DATA_DIR = Path(__file__).resolve().parent / "data"
+DATA_DIR.mkdir(exist_ok=True)
 
-def download_stock_data(ticker: str, start="2020-01-01"):
+
+def download_stock_data(ticker: str, start="2020-01-01", allow_download=True):
     ticker = ticker.upper().strip()
-    cache_file = CACHE_DIR / f"{ticker}.json"
+    path = DATA_DIR / f"{ticker}.csv"
 
-    if cache_file.exists():
-        with open(cache_file, "r") as f:
-            data = json.load(f)
-    else:
-        url = (
-            "https://www.alphavantage.co/query?"
-            f"function=TIME_SERIES_DAILY"
-            f"&symbol={ticker}"
-            f"&outputsize=compact"
-            f"&apikey={API_KEY}"
+    if path.exists():
+        df = pd.read_csv(path)
+    elif allow_download:
+        df = yf.download(
+            ticker,
+            start=start,
+            progress=False,
+            auto_adjust=False,
+            threads=False
         )
 
-        r = requests.get(url, timeout=30)
-        data = r.json()
+        if df is None or df.empty:
+            raise ValueError(f"No data returned for {ticker}")
 
-        if "Time Series (Daily)" not in data:
-            raise ValueError(f"API error: {data}")
+        df = df.reset_index()
+        df.columns = [c.replace(" ", "_") for c in df.columns]
+        df.to_csv(path, index=False)
+    else:
+        raise FileNotFoundError(f"Missing cached CSV for {ticker}: {path}")
 
-        with open(cache_file, "w") as f:
-            json.dump(data, f)
+    if "Date" not in df.columns:
+        raise ValueError(f"{path} must contain a Date column")
 
-        time.sleep(1.1)  # stay under the free per-second limit
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df = df.dropna(subset=["Date"])
+    df = df[df["Date"] >= pd.to_datetime(start)].reset_index(drop=True)
 
-    ts = data["Time Series (Daily)"]
+    required = ["Date", "Open", "High", "Low", "Close", "Volume"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise ValueError(f"{ticker} missing columns: {missing}")
 
-    rows = []
-    for date, values in ts.items():
-        rows.append({
-            "Date": date,
-            "Open": float(values["1. open"]),
-            "High": float(values["2. high"]),
-            "Low": float(values["3. low"]),
-            "Close": float(values["4. close"]),
-            "Volume": float(values["5. volume"]),
-        })
-
-    df = pd.DataFrame(rows)
-    df["Date"] = pd.to_datetime(df["Date"])
-    df = df[df["Date"] >= pd.to_datetime(start)]
-    df = df.sort_values("Date").reset_index(drop=True)
     return df

@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
-import joblib
 
+import joblib
 import pandas as pd
 
 from data_loader import download_stock_data
@@ -20,7 +20,7 @@ with open(MODEL_DIR / "feature_columns.json", "r") as f:
 def predict_ticker(ticker: str):
     ticker = ticker.upper().strip()
 
-    df = download_stock_data(ticker)
+    df = download_stock_data(ticker, allow_download=True)
     df = add_technical_features(df)
     df = df.dropna().reset_index(drop=True)
 
@@ -29,11 +29,9 @@ def predict_ticker(ticker: str):
 
     latest = df.iloc[-1:].copy()
     X = latest.reindex(columns=FEATURE_COLUMNS, fill_value=0)
-
     X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
 
     proba_up = float(MODEL.predict_proba(X)[0, 1])
-
     sentiment_score, news_items = get_sentiment(ticker)
     sentiment_adj = (sentiment_score + 1) / 2
     combined = 0.85 * proba_up + 0.15 * sentiment_adj

@@ -22,7 +22,7 @@ def _yahoo_news(ticker: str, max_items: int = 10):
         items.append({
             "title": title,
             "source": item.get("publisher", "Yahoo Finance"),
-            "url": item.get("link", ""),
+            "url": item.get("link", "")
         })
     return items
 
@@ -47,7 +47,7 @@ def _google_news_rss(ticker: str, max_items: int = 10):
         items.append({
             "title": title,
             "source": "Google News",
-            "url": link,
+            "url": link
         })
 
     return items
@@ -63,9 +63,8 @@ def get_sentiment(ticker: str, max_items: int = 10):
     if not news_items:
         return 0.0, []
 
-    scores = []
-    for item in news_items:
-        scores.append(analyzer.polarity_scores(item["title"])["compound"])
-
-    sentiment_score = sum(scores) / len(scores)
-    return float(sentiment_score), news_items
+    scores = [
+        analyzer.polarity_scores(item["title"])["compound"]
+        for item in news_items
+    ]
+    return float(sum(scores) / len(scores)), news_items

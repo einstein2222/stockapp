@@ -4,9 +4,9 @@ from predict import predict_ticker
 st.set_page_config(page_title="Stock Direction Predictor", layout="centered")
 
 st.title("Stock Price Movement Predictor")
-st.write("Predict whether a stock will go up or down next day.")
+st.write("Predict whether a stock will go up or down next trading day.")
 
-ticker = st.text_input("Enter stock ticker", value="AAPL").strip().upper()
+ticker = st.text_input("Enter a stock ticker", value="AAPL").strip().upper()
 
 if st.button("Predict"):
     if not ticker:
