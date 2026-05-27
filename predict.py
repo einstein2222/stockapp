@@ -1,7 +1,8 @@
-# predict.py
 from pathlib import Path
 import json
 import joblib
+
+import pandas as pd
 
 from data_loader import download_stock_data
 from features import add_technical_features
@@ -27,13 +28,14 @@ def predict_ticker(ticker: str):
         raise ValueError(f"Not enough data to build features for {ticker}")
 
     latest = df.iloc[-1:].copy()
-
     X = latest.reindex(columns=FEATURE_COLUMNS, fill_value=0)
 
-    proba_up = float(MODEL.predict_proba(X)[0, 1])
-    sentiment_score, headlines = get_sentiment(ticker)
-    sentiment_adj = (sentiment_score + 1) / 2
+    X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
 
+    proba_up = float(MODEL.predict_proba(X)[0, 1])
+
+    sentiment_score, news_items = get_sentiment(ticker)
+    sentiment_adj = (sentiment_score + 1) / 2
     combined = 0.85 * proba_up + 0.15 * sentiment_adj
 
     return {
@@ -43,5 +45,5 @@ def predict_ticker(ticker: str):
         "proba_down": 1 - proba_up,
         "sentiment_score": sentiment_score,
         "combined_score": combined,
-        "headlines": headlines[:5],
+        "news_items": news_items[:5],
     }

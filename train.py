@@ -33,7 +33,7 @@ def build_dataset():
 def train():
     df = build_dataset()
 
-    feature_cols = [c for c in df.columns if c not in ["Target", "Date", "Ticker"]]
+    feature_cols = [c for c in df.columns if c not in ["Target", "Date"]]
 
     X = df[feature_cols]
     y = df["Target"]
