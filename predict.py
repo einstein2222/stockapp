@@ -23,7 +23,7 @@ def predict_ticker(ticker: str):
     df = df.dropna().reset_index(drop=True)
 
     if df.empty:
-        raise ValueError(f"Not enough data to build features for {ticker}")
+        raise ValueError(f"not enough data for {ticker}")
 
     latest = df.iloc[-1:].copy()
     X = latest.reindex(columns=FEATURE_COLUMNS, fill_value=0)
