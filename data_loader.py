@@ -8,11 +8,8 @@ def download_stock_data(ticker: str, start="2020-01-01", end=None):
 
     df = pd.read_parquet(HF_DATASET_PATH)
 
-    # normalize column names from the dataset
     df.columns = [c.lower() for c in df.columns]
 
-    # expected columns in the HF dataset:
-    # datetime, open, high, low, close, volume, ticker, interval, source_category
     if "ticker" not in df.columns:
         raise ValueError("Dataset does not contain ticker column")
 
